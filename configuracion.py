@@ -24,6 +24,7 @@ DIR_PE04 = DIR_BASE / 'PE-04'
 DIR_METAS = DIR_BASE / 'metas'
 DIR_APRENDICES = DIR_BASE / 'aprendices'
 DIR_REPORTE_ECONOMIA_NARANJA = DIR_BASE / 'REPORTE_ECONOMIA_NARANJA'
+SCRIPTS = DIR_PROCESO / 'scripts'
 
 # ============================================
 # MAPEO DE MESES
@@ -118,12 +119,12 @@ def obtener_config_mes(mes_nombre):
 
         # SCRIPTS A EJECUTAR (rutas absolutas)
         'scripts': {
-            'importar_pe04': DIR_PE04 / 'importar_pe_04_mes.py',
-            'crear_tabla_economia_naranja': DIR_REPORTE_ECONOMIA_NARANJA / 'crear_tabla_economia_naranja.sql',
-            'normalizar_metas': DIR_METAS / 'normalizar_metas_sena.py',
-            'cruce_metas_avance': DIR_METAS / 'cruce_metas_avance_final.py',
-            'generar_reporte_aprendices': DIR_APRENDICES / 'generar_reporte_mensual.py',
-            'generar_reporte_consolidado': DIR_REPORTE_ECONOMIA_NARANJA / 'generar_reporte_consolidado.py'
+            'importar_pe04': DIR_PESCRIPTS04 / 'importar_pe_04_mes.py',
+            'crear_tabla_economia_naranja': SCRIPTS / 'crear_tabla_economia_naranja.sql',
+            'normalizar_metas': SCRIPTS / 'normalizar_metas_sena.py',
+            'cruce_metas_avance': SCRIPTS / 'cruce_metas_avance_final.py',
+            'generar_reporte_mensual_aprendices': SCRIPTS / 'generar_reporte_mensual_aprendices.py',
+            'generar_reporte_consolidado': SCRIPTS / 'generar_reporte_consolidado.py'
         },
 
         # NOMBRES DE TABLAS EN BD

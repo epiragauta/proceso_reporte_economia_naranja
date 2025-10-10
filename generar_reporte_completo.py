@@ -307,7 +307,7 @@ def paso_7_generar_reporte_aprendices(config):
 
     try:
         resultado = ejecutar_comando(
-            ['python', 'generar_reporte_mensual.py'],
+            ['python', 'generar_reporte_mensual_aprendices.py'],
             "Generar reporte de aprendices",
             check=True
         )

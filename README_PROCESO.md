@@ -66,7 +66,7 @@ El proceso ejecuta de manera secuencial los siguientes pasos:
 - **Función**: Consolida estadísticas de aprendices por regional
 - **Entrada**: `PRIMER AVANCE EN APRENDICES {MES} {AÑO}.xlsb`
 - **Salida**: `SENA Mensual Nacional {MES_CORTO} {AÑO}.xlsx`
-- **Script externo**: `aprendices/generar_reporte_mensual.py`
+- **Script externo**: `aprendices/generar_reporte_mensual_aprendices.py`
 - **Métricas**: Aprendices matriculados, en formación, certificados
 
 ### Paso 8: Consolidación Final del Reporte
@@ -110,7 +110,7 @@ C:\ws\sena\data\
 │   └── cruce_metas_avance_final.py
 │
 ├── aprendices\                                # Componente: Reportes aprendices
-│   └── generar_reporte_mensual.py
+│   └── generar_reporte_mensual_aprendices.py
 │
 ├── REPORTE_ECONOMIA_NARANJA\                  # Componente: Reporte consolidado
 │   ├── crear_tabla_economia_naranja.sql

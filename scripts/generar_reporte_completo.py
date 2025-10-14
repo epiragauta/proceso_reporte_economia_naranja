@@ -31,7 +31,7 @@ def log_paso(numero, total, mensaje):
     print(f"{'='*70}")
 
 
-def ejecutar_comando(comando, descripcion, check=True):
+def ejecutar_comando(comando, descripcion, check=True, env=None):
     """
     Ejecuta un comando del sistema y maneja errores
 
@@ -39,6 +39,7 @@ def ejecutar_comando(comando, descripcion, check=True):
         comando (list): Comando a ejecutar
         descripcion (str): Descripción del comando
         check (bool): Si True, lanza excepción en caso de error
+        env (dict): Variables de entorno adicionales
 
     Returns:
         bool: True si exitoso, False si falló
@@ -51,7 +52,10 @@ def ejecutar_comando(comando, descripcion, check=True):
             comando,
             check=check,
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            env=env
         )
 
         if result.returncode == 0:
@@ -169,15 +173,11 @@ def paso_3_generar_bd_formacion(config):
     """PASO 3: Generar base de datos de formación"""
     log_paso(3, 8, "Generar base de datos de formación")
 
-    # Preparar variables de entorno
-    env = os.environ.copy()
-    env['ARCHIVO_ENTRADA'] = str(config['dir_datos_intermedios'] / config['archivos_entrada']['pe04_formacion'].name)
-    env['ARCHIVO_SALIDA'] = str(config['archivos_intermedios']['bd_formacion'])
-    env['MES'] = config['mes_nombre']
-
-    # Ejecutar script de importación
+    # Ejecutar script de importación con directorio y mes como parámetros
     return ejecutar_comando(
-        ['python', str(config['scripts']['importar_pe04'])],
+        ['python', str(config['scripts']['importar_pe04']),
+         str(config['dir_datos_intermedios']),
+         config['mes_nombre']],
         f"Importar datos de PE-04 para {config['mes_nombre']}",
         check=True
     )
@@ -303,7 +303,7 @@ def paso_7_generar_reporte_aprendices(config):
 
     # Cambiar al directorio de aprendices
     cwd_original = os.getcwd()
-    os.chdir(config['scripts']['generar_reporte_aprendices'].parent)
+    os.chdir(config['scripts']['generar_reporte_mensual_aprendices'].parent)
 
     try:
         resultado = ejecutar_comando(
@@ -348,7 +348,8 @@ def paso_8_generar_reporte_consolidado(config):
         resultado = ejecutar_comando(
             ['python', 'generar_reporte_consolidado.py'],
             "Generar reporte consolidado",
-            check=True
+            check=True,
+            env=env
         )
 
         # Mover archivo generado a datos_finales

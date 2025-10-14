@@ -40,7 +40,7 @@ WITH programas_eco_naranja AS (
     WHERE EXISTS (
         SELECT 1
         FROM programas_economia_naranja pen
-        WHERE CAST(pen.codigo AS TEXT) || CAST(pen.version AS TEXT) =
+        WHERE CAST(pen.codigo_programa AS TEXT) || CAST(pen.version_programa AS TEXT) =
               CAST(f.codigo_programa AS TEXT) || CAST(f.version_programa AS TEXT)
     )
     -- Excluir programas especiales específicos
@@ -67,9 +67,9 @@ ORDER BY
     pen.nombre_programa;
 
 -- Crear índices para optimizar consultas
-CREATE INDEX IF NOT EXISTS idx_economia_naranja_nivel ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(CODIGO_NIVEL_FORMACION);
+--CREATE INDEX IF NOT EXISTS idx_economia_naranja_nivel ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(CODIGO_NIVEL_FORMACION);
 CREATE INDEX IF NOT EXISTS idx_economia_naranja_departamento ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(nombre_departamento);
-CREATE INDEX IF NOT EXISTS idx_economia_naranja_programa ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(nombre_programa_formacion);
+CREATE INDEX IF NOT EXISTS idx_economia_naranja_programa ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(nombre_programa);
 CREATE INDEX IF NOT EXISTS idx_economia_naranja_total ON ECONOMIA_NARANJA_SEPTIEMBRE_2025(TOTAL);
 
 -- Mostrar estadísticas de la tabla creada

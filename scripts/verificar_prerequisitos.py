@@ -7,7 +7,7 @@ estén disponibles antes de iniciar el proceso de generación del reporte.
 
 import sys
 from pathlib import Path
-from configuracion import obtener_config_mes, MESES
+from scripts.configuracion import obtener_config_mes, MESES
 
 def verificar_python():
     """Verifica la versión de Python"""
@@ -97,7 +97,7 @@ def verificar_directorios_base():
     """Verifica que los directorios base existan"""
     print("\n5. Verificando estructura de directorios...")
 
-    from configuracion import DIR_BASE, DIR_PE04, DIR_METAS, DIR_APRENDICES, DIR_REPORTE_ECONOMIA_NARANJA
+    from scripts.configuracion import DIR_BASE, DIR_PE04, DIR_METAS, DIR_APRENDICES, DIR_REPORTE_ECONOMIA_NARANJA
 
     directorios = {
         'DIR_BASE': DIR_BASE,

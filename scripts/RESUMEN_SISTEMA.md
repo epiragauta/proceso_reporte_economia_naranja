@@ -109,7 +109,7 @@ python verificar_prerequisitos.py SEPTIEMBRE
 python generar_reporte_completo.py SEPTIEMBRE
 ```
 
-### Paso 3: Recoger Reporte
+### Paso 3: Ubicación Reporte
 ```
 Ubicación:
 SEPTIEMBRE/datos_finales/Reporte Consolidado Economía Naranja Sep 2025.xlsx

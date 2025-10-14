@@ -18,7 +18,7 @@ DIR_BASE = Path(r'C:\ws\sena\data')
 
 # Directorio del proceso
 DIR_PROCESO = DIR_BASE / 'PROCESO_REPORTE_ECONOMIA_NARANJA'
-
+DIR_MESES = DIR_PROCESO / 'MESES'
 # Directorios de componentes existentes
 DIR_PE04 = DIR_BASE / 'PE-04'
 DIR_METAS = DIR_BASE / 'metas'
@@ -75,7 +75,7 @@ def obtener_config_mes(mes_nombre):
     mes_numero = mes_info['numero']
 
     # Directorios del mes
-    dir_mes = DIR_PROCESO / mes_nombre
+    dir_mes = DIR_PROCESO / DIR_MESES / mes_nombre
     dir_datos_intermedios = dir_mes / 'datos_intermedios'
     dir_datos_finales = dir_mes / 'datos_finales'
 
@@ -100,7 +100,7 @@ def obtener_config_mes(mes_nombre):
             'pe04_formacion': dir_fuente / f'PE-04_FORMACION NACIONAL {mes_nombre.upper()} {ANIO_TRABAJO}.xlsb',
             'avance_cupos': dir_fuente / f'PRIMER AVANCE CUPOS DE FORMACION {mes_nombre.upper()} {ANIO_TRABAJO}.xlsb',
             'avance_aprendices': dir_fuente / f'PRIMER AVANCE EN APRENDICES {mes_nombre.upper()} {ANIO_TRABAJO}.xlsb',
-            'metas_sena': DIR_BASE / '2025' / '09-Septiembre' / 'Metas SENA 2025 V5 26092025_CLEAN.xlsx'  # Único archivo anual
+            'metas_sena': dir_fuente / 'Metas SENA 2025 V5 26092025_CLEAN.xlsx'  # Único archivo anual
         },
 
         # ARCHIVOS INTERMEDIOS
@@ -119,12 +119,13 @@ def obtener_config_mes(mes_nombre):
 
         # SCRIPTS A EJECUTAR (rutas absolutas)
         'scripts': {
-            'importar_pe04': DIR_PESCRIPTS04 / 'importar_pe_04_mes.py',
+            'importar_pe04': SCRIPTS / 'importar_pe_04_mes.py',
             'crear_tabla_economia_naranja': SCRIPTS / 'crear_tabla_economia_naranja.sql',
             'normalizar_metas': SCRIPTS / 'normalizar_metas_sena.py',
             'cruce_metas_avance': SCRIPTS / 'cruce_metas_avance_final.py',
             'generar_reporte_mensual_aprendices': SCRIPTS / 'generar_reporte_mensual_aprendices.py',
-            'generar_reporte_consolidado': SCRIPTS / 'generar_reporte_consolidado.py'
+            'generar_reporte_consolidado': DIR_REPORTE_ECONOMIA_NARANJA / 'generar_reporte_consolidado.py',
+            'generar_reporte_completo': SCRIPTS / 'generar_reporte_completo.py'
         },
 
         # NOMBRES DE TABLAS EN BD

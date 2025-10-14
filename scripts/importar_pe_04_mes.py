@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 import io
+import pandas as pd
 
 # Configurar codificación para Windows
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -22,11 +23,14 @@ sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='repla
 class ImportadorFormacionSENA:
     """Importa y normaliza datos de formación SENA desde Excel a SQLite"""
 
-    def __init__(self, mes):
+    def __init__(self, directorio, mes):
         self.mes = mes.upper()
-        self.directorio = Path(__file__).parent
+        self.directorio = Path(directorio)
         self.archivo_excel = self.directorio / f"PE-04_FORMACION NACIONAL {self.mes} 2025.xlsb"
         self.archivo_db = self.directorio / f"sena_formacion_{self.mes.lower()}.db"
+
+        # Buscar el catálogo de economía naranja (puede estar en varios lugares)
+        self.catalogo_eco_naranja = self._buscar_catalogo_economia_naranja()
 
         # Mapeo de columnas según la estructura de la BD existente
         self.tablas = {
@@ -43,6 +47,58 @@ class ImportadorFormacionSENA:
             'empresas': set(),
             'programas_economia_naranja': set()
         }
+
+    def _buscar_catalogo_economia_naranja(self):
+        """Busca el archivo de catálogo de economía naranja en ubicaciones conocidas"""
+        posibles_rutas = [
+            self.directorio / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
+            self.directorio.parent / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
+            Path("C:/ws/sena/data/REPORTE_ECONOMIA_NARANJA/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx"),
+            Path("C:/ws/sena/data/2025/09-Septiembre/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
+        ]
+
+        for ruta in posibles_rutas:
+            if ruta.exists():
+                print(f"[OK] Catálogo de Economía Naranja encontrado: {ruta}")
+                return ruta
+
+        print("[!] ADVERTENCIA: No se encontró el catálogo CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
+        return None
+
+    def _cargar_catalogo_economia_naranja(self, cursor):
+        """Carga los programas de economía naranja desde el catálogo Excel"""
+        try:
+            print(f"\n→ Cargando catálogo de Economía Naranja...")
+
+            # Leer el archivo Excel
+            df = pd.read_excel(self.catalogo_eco_naranja)
+
+            # Validar que existan las columnas necesarias
+            columnas_requeridas = ['CODIGO', 'VERSION', 'NOMBRE DE PROGRAMA']
+            columnas_faltantes = [col for col in columnas_requeridas if col not in df.columns]
+
+            if columnas_faltantes:
+                print(f"[!] El catálogo no tiene las columnas esperadas: {', '.join(columnas_faltantes)}")
+                return
+
+            # Insertar cada programa en la tabla
+            programas_insertados = 0
+            for _, row in df.iterrows():
+                codigo = row['CODIGO']
+                version = row['VERSION']
+                nombre = row['NOMBRE DE PROGRAMA']
+
+                if pd.notna(codigo) and pd.notna(version) and pd.notna(nombre):
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO programas_economia_naranja (CODIGO_PROGRAMA, VERSION_PROGRAMA, NOMBRE_PROGRAMA)
+                        VALUES (?, ?, ?)
+                    """, (int(codigo), int(version), str(nombre)))
+                    programas_insertados += 1
+
+            print(f"[OK] Programas de Economía Naranja cargados: {programas_insertados}")
+
+        except Exception as e:
+            print(f"[!] Error al cargar catálogo de Economía Naranja: {e}")
 
     def validar_archivo(self):
         """Valida que el archivo Excel exista"""
@@ -161,10 +217,16 @@ class ImportadorFormacionSENA:
         # Tabla programas_economia_naranja
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS programas_economia_naranja (
-                CODIGO_PROGRAMA INTEGER PRIMARY KEY,
-                NOMBRE_PROGRAMA TEXT
+                CODIGO_PROGRAMA INTEGER,
+                VERSION_PROGRAMA INTEGER,
+                NOMBRE_PROGRAMA TEXT,
+                PRIMARY KEY (CODIGO_PROGRAMA, VERSION_PROGRAMA)
             )
         """)
+
+        # Cargar datos desde el catálogo si existe
+        if self.catalogo_eco_naranja:
+            self._cargar_catalogo_economia_naranja(cursor)
 
         # Tabla fichas (tabla principal con todas las fichas de formación)
         cursor.execute("""
@@ -514,13 +576,14 @@ class ImportadorFormacionSENA:
 
 def main():
     """Función principal"""
-    if len(sys.argv) < 2:
-        print("Uso: python importar_mes.py <MES>")
-        print("Ejemplo: python importar_mes.py SEPTIEMBRE")
+    if len(sys.argv) < 3:
+        print("Uso: python importar_mes.py <DIRECTORIO> <MES>")
+        print("Ejemplo: python importar_mes.py c:\\ws\\sena\\data\\ SEPTIEMBRE")
         sys.exit(1)
 
-    mes = sys.argv[1]
-    importador = ImportadorFormacionSENA(mes)
+    directorio = Path(sys.argv[1])
+    mes = sys.argv[2]
+    importador = ImportadorFormacionSENA(directorio, mes)
     importador.ejecutar()
 
 if __name__ == "__main__":

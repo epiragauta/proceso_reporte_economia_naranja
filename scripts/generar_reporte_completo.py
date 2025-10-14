@@ -73,15 +73,27 @@ def ejecutar_comando(comando, descripcion, check=True, env=None):
             return True
         else:
             print(f"✗ {descripcion} - FALLÓ")
+            if result.stdout:
+                print(f"\n  STDOUT:")
+                for linea in result.stdout.strip().split('\n'):
+                    print(f"    {linea}")
             if result.stderr:
-                print(f"  Error: {result.stderr}")
+                print(f"\n  STDERR:")
+                for linea in result.stderr.strip().split('\n'):
+                    print(f"    {linea}")
             return False
 
     except subprocess.CalledProcessError as e:
         print(f"✗ {descripcion} - ERROR")
         print(f"  Código de salida: {e.returncode}")
+        if e.stdout:
+            print(f"\n  STDOUT:")
+            for linea in e.stdout.strip().split('\n'):
+                print(f"    {linea}")
         if e.stderr:
-            print(f"  Error: {e.stderr}")
+            print(f"\n  STDERR:")
+            for linea in e.stderr.strip().split('\n'):
+                print(f"    {linea}")
         if check:
             raise
         return False
@@ -277,15 +289,25 @@ def paso_6_calcular_cupos_disponibles(config):
             check=True
         )
 
-        # Mover archivos generados a datos_intermedios
+        # Copiar archivos generados a datos_intermedios
         if resultado:
-            for ext in ['.xlsx', '.csv']:
-                archivo_origen = Path(f'cupos_disponibles_por_regional_2025{ext}')
-                if archivo_origen.exists():
-                    shutil.move(
-                        str(archivo_origen),
-                        str(config['archivos_intermedios'] / archivo_origen.name)
-                    )
+            # El archivo se genera en el directorio de metas
+            archivo_xlsx_origen = config['scripts']['cruce_metas_avance'].parent / 'cupos_disponibles_por_regional_2025.xlsx'
+            archivo_csv_origen = config['scripts']['cruce_metas_avance'].parent / 'cupos_disponibles_por_regional_2025.csv'
+
+            if archivo_xlsx_origen.exists():
+                shutil.copy2(
+                    str(archivo_xlsx_origen),
+                    str(config['archivos_intermedios']['cupos_disponibles_xlsx'])
+                )
+                print(f"\n✓ Archivo XLSX copiado a datos_intermedios")
+
+            if archivo_csv_origen.exists():
+                shutil.copy2(
+                    str(archivo_csv_origen),
+                    str(config['archivos_intermedios']['cupos_disponibles_csv'])
+                )
+                print(f"✓ Archivo CSV copiado a datos_intermedios")
 
         return resultado
     finally:
@@ -312,14 +334,16 @@ def paso_7_generar_reporte_aprendices(config):
             check=True
         )
 
-        # Mover archivo generado a datos_intermedios
+        # Copiar archivo generado a datos_intermedios
         if resultado:
-            archivo_generado = Path(f"SENA Mensual Nacional {config['mes_corto']} {config['anio']}.xlsx")
+            # El archivo se genera en el directorio de scripts de aprendices
+            archivo_generado = config['scripts']['generar_reporte_mensual_aprendices'].parent / f"SENA Mensual Nacional {config['mes_corto']} {config['anio']}.xlsx"
             if archivo_generado.exists():
-                shutil.move(
+                shutil.copy2(
                     str(archivo_generado),
                     str(config['archivos_intermedios']['reporte_aprendices'])
                 )
+                print(f"\n✓ Reporte de aprendices copiado a datos_intermedios")
 
         return resultado
     finally:

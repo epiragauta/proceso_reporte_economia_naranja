@@ -15,10 +15,15 @@ from datetime import datetime
 import re
 import io
 import pandas as pd
+import os
 
 # Configurar codificación para Windows
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+# Importar configuración centralizada
+sys.path.insert(0, str(Path(__file__).parent))
+from configuracion import ANIO_TRABAJO
 
 class ImportadorFormacionSENA:
     """Importa y normaliza datos de formación SENA desde Excel a SQLite"""
@@ -26,7 +31,8 @@ class ImportadorFormacionSENA:
     def __init__(self, directorio, mes):
         self.mes = mes.upper()
         self.directorio = Path(directorio)
-        self.archivo_excel = self.directorio / f"PE-04_FORMACION NACIONAL {self.mes} 2025.xlsb"
+        self.anio = ANIO_TRABAJO
+        self.archivo_excel = self.directorio / f"PE-04_FORMACION NACIONAL {self.mes} {self.anio}.xlsb"
         self.archivo_db = self.directorio / f"sena_formacion_{self.mes.lower()}.db"
 
         # Buscar el catálogo de economía naranja (puede estar en varios lugares)
@@ -54,7 +60,7 @@ class ImportadorFormacionSENA:
             self.directorio / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
             self.directorio.parent / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
             Path("C:/ws/sena/data/REPORTE_ECONOMIA_NARANJA/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx"),
-            Path("C:/ws/sena/data/2025/09-Septiembre/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
+            Path(f"C:/ws/sena/data/{self.anio}/09-Septiembre/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
         ]
 
         for ruta in posibles_rutas:
@@ -525,7 +531,7 @@ class ImportadorFormacionSENA:
     def mostrar_estadisticas(self, cursor):
         """Muestra estadísticas de la importación"""
         print("\n" + "="*60)
-        print(f"ESTADÍSTICAS DE IMPORTACIÓN - {self.mes} 2025")
+        print(f"ESTADÍSTICAS DE IMPORTACIÓN - {self.mes} {self.anio}")
         print("="*60)
 
         tablas_stats = [
@@ -554,7 +560,7 @@ class ImportadorFormacionSENA:
     def ejecutar(self):
         """Ejecuta el proceso completo de importación"""
         print("\n" + "="*60)
-        print(f"IMPORTADOR DE FORMACIÓN SENA - {self.mes} 2025")
+        print(f"IMPORTADOR DE FORMACIÓN SENA - {self.mes} {self.anio}")
         print("="*60 + "\n")
 
         try:

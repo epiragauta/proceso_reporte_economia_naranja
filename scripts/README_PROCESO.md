@@ -2,7 +2,7 @@
 
 ## Propósito del Proceso
 
-Este sistema automatiza la generación del **Reporte Consolidado de Economía Naranja** del SENA Colombia. El proceso integra datos de múltiples fuentes institucionales para producir un reporte mensual consolidado que permite el seguimiento de programas de formación en áreas de economía creativa y cultural.
+Este procedimiento automatiza la generación del **Reporte Consolidado de Economía Naranja**. El proceso integra datos de múltiples fuentes institucionales para producir un reporte mensual consolidado que permite el seguimiento de programas de formación en áreas de economía naranja.
 
 El sistema centraliza la gestión de datos de formación, metas institucionales y avance de aprendices, reduciendo el tiempo de generación de reportes de varios días a minutos y eliminando errores manuales en el procesamiento de información.
 
@@ -32,16 +32,27 @@ El proceso ejecuta de manera secuencial los siguientes pasos:
 - **Función**: Convierte el archivo PE-04 a formato SQLite para procesamiento eficiente
 - **Entrada**: `PE-04_FORMACION NACIONAL {MES} {AÑO}.xlsb`
 - **Salida**: `sena_formacion_{mes}.db`
-- **Script externo**: `PE-04/importar_pe_04_mes.py`
+- **Script externo**: `importar_pe_04_mes.py`
+- **Parámetros requeridos**:
+  - Directorio de trabajo (donde se encuentra el archivo PE-04)
+  - Mes del archivo (ejemplo: SEPTIEMBRE)
+- **Procesamiento adicional**:
+  - Carga automática del catálogo de programas de economía naranja desde `CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx`
+  - Crea tabla `programas_economia_naranja` con código, versión y nombre de programa
+  - Búsqueda inteligente del catálogo en múltiples ubicaciones
 - **Tecnología**: Python + pandas + pyxlsb + sqlite3
 
 ### Paso 4: Creación de Tabla de Economía Naranja
-- **Función**: Filtra programas de economía naranja mediante SQL
+- **Función**: Filtra programas de economía naranja mediante SQL usando catálogo precargado
 - **Proceso**:
-  - Lee template SQL: `REPORTE_ECONOMIA_NARANJA/crear_tabla_economia_naranja.sql`
-  - Aplica filtros por líneas tecnológicas de economía creativa
-  - Genera tabla: `ECONOMIA_NARANJA_{MES}_{AÑO}`
-- **Criterios de filtrado**: Líneas tecnológicas 11, 12, 13, 14, 15, 16
+  - Lee template SQL: `crear_tabla_economia_naranja.sql`
+  - Aplica join con tabla `programas_economia_naranja` (cargada en Paso 3)
+  - Filtra fichas activas de programas de economía creativa
+  - Genera tabla precalculada: `ECONOMIA_NARANJA_{MES}_{AÑO}`
+- **Criterios de filtrado**:
+  - Programas listados en catálogo de economía naranja (783 programas)
+  - Estados de curso: EJECUCION, POR INICIAR
+  - Cruce por código y versión de programa
 - **Script responsable**: `generar_reporte_completo.py::paso_4_crear_tabla_economia_naranja()`
 
 ### Paso 5: Generación de Base de Datos de Metas
@@ -59,26 +70,40 @@ El proceso ejecuta de manera secuencial los siguientes pasos:
 - **Salidas**:
   - `cupos_disponibles_por_regional_2025.xlsx`
   - `cupos_disponibles_por_regional_2025.csv`
+- **Ubicación salida**: Los archivos generados se copian de `metas/` a `datos_intermedios/`
 - **Script externo**: `metas/cruce_metas_avance_final.py`
 - **Cálculo**: Cupos Disponibles = Meta Anual - Avance Acumulado
+- **Mejora**: Copia archivos usando rutas absolutas para evitar problemas de directorio de trabajo
 
 ### Paso 7: Generación de Reporte de Aprendices
 - **Función**: Consolida estadísticas de aprendices por regional
 - **Entrada**: `PRIMER AVANCE EN APRENDICES {MES} {AÑO}.xlsb`
 - **Salida**: `SENA Mensual Nacional {MES_CORTO} {AÑO}.xlsx`
+- **Ubicación salida**: El archivo generado se copia de `aprendices/` a `datos_intermedios/`
 - **Script externo**: `aprendices/generar_reporte_mensual_aprendices.py`
 - **Métricas**: Aprendices matriculados, en formación, certificados
+- **Mejora**: Copia archivo usando ruta absoluta para evitar problemas de directorio de trabajo
 
 ### Paso 8: Consolidación Final del Reporte
-- **Función**: Integra todas las fuentes en un reporte Excel maestro
-- **Entradas**:
-  - `sena_formacion_{mes}.db` (tabla ECONOMIA_NARANJA)
+- **Función**: Integra todas las fuentes en un reporte Excel maestro de 3 hojas
+- **Entradas** (desde `datos_intermedios/`):
+  - `sena_formacion_{mes}.db` (tabla precalculada ECONOMIA_NARANJA_{MES}_{AÑO})
   - `cupos_disponibles_por_regional_2025.xlsx`
   - `SENA Mensual Nacional {MES_CORTO} {AÑO}.xlsx`
 - **Salida**: `Reporte Consolidado Economía Naranja {MES_CORTO} {AÑO}.xlsx`
-- **Ubicación**: `datos_finales/`
+- **Ubicación salida**: `datos_finales/`
 - **Script externo**: `REPORTE_ECONOMIA_NARANJA/generar_reporte_consolidado.py`
-- **Contenido**: Vistas consolidadas por regional, programa y línea tecnológica
+- **Contenido del reporte**:
+  - Hoja 1: Datos de Economía Naranja (3998 registros)
+  - Hoja 2: Oferta Disponible por Regional (33 regionales)
+  - Hoja 3: SENA Mensual Nacional (copiada con formato preservado)
+- **Variables de entorno utilizadas**:
+  - `BD_FORMACION`: Ruta a base de datos de formación
+  - `CUPOS_DISPONIBLES`: Ruta a archivo de cupos
+  - `REPORTE_APRENDICES`: Ruta a reporte de aprendices
+  - `ARCHIVO_SALIDA`: Ruta del reporte final
+  - `MES_TRABAJO`, `MES_CORTO`, `ANIO`: Parámetros del mes
+- **Mejora**: Script completamente parametrizable mediante variables de entorno, sin rutas hardcodeadas
 
 ## Arquitectura del Sistema
 
@@ -87,40 +112,44 @@ El proceso ejecuta de manera secuencial los siguientes pasos:
 ```
 C:\ws\sena\data\
 ├── PROCESO_REPORTE_ECONOMIA_NARANJA\          # Directorio raíz del proceso
-│   ├── configuracion.py                       # Configuración centralizada
-│   ├── generar_reporte_completo.py           # Script maestro (orquestador)
-│   ├── verificar_prerequisitos.py            # Validador de requisitos
-│   ├── limpiar_mes.py                        # Limpieza de datos del mes
+│   ├── scripts\                               # Scripts del sistema
+│   │   ├── configuracion.py                   # Configuración centralizada
+│   │   ├── generar_reporte_completo.py       # Script maestro (orquestador)
+│   │   ├── importar_pe_04_mes.py             # Importación PE-04 a SQLite
+│   │   ├── crear_tabla_economia_naranja.sql  # Template SQL para filtrado
+│   │   ├── verificar_prerequisitos.py        # Validador de requisitos
+│   │   ├── limpiar_mes.py                    # Limpieza de datos del mes
+│   │   └── README_PROCESO.md                 # Este documento
 │   │
-│   ├── {MES}\                                # Directorio por mes (ej: SEPTIEMBRE)
-│   │   ├── datos_intermedios\                # Archivos de procesamiento
-│   │   │   ├── *.xlsb                       # Copias de archivos fuente
-│   │   │   ├── *.db                         # Bases de datos SQLite
-│   │   │   ├── cupos_disponibles_*.xlsx     # Cálculos intermedios
-│   │   │   └── SENA Mensual Nacional *.xlsx # Reporte de aprendices
-│   │   │
-│   │   └── datos_finales\                    # Producto final
-│   │       └── Reporte Consolidado *.xlsx   # Reporte maestro
-│   │
-├── PE-04\                                     # Componente: Importación PE-04
-│   └── importar_pe_04_mes.py
+│   └── MESES\                                 # Directorios de procesamiento mensual
+│       └── {MES}\                             # Directorio por mes (ej: SEPTIEMBRE)
+│           ├── datos_intermedios\             # Archivos de procesamiento
+│           │   ├── *.xlsb                    # Copias de archivos fuente
+│           │   ├── sena_formacion_{mes}.db   # Base de datos de formación
+│           │   ├── metas_sena_2025.db        # Base de datos de metas
+│           │   ├── cupos_disponibles_*.xlsx  # Cálculos intermedios
+│           │   └── SENA Mensual Nacional *.xlsx # Reporte de aprendices
+│           │
+│           └── datos_finales\                 # Producto final
+│               └── Reporte Consolidado *.xlsx # Reporte maestro
 │
 ├── metas\                                     # Componente: Gestión de metas
-│   ├── normalizar_metas_sena.py
-│   └── cruce_metas_avance_final.py
+│   ├── normalizar_metas_sena.py              # Normalización de metas
+│   └── cruce_metas_avance_final.py           # Cálculo cupos disponibles
 │
 ├── aprendices\                                # Componente: Reportes aprendices
-│   └── generar_reporte_mensual_aprendices.py
+│   └── generar_reporte_mensual_aprendices.py # Consolidado de aprendices
 │
 ├── REPORTE_ECONOMIA_NARANJA\                  # Componente: Reporte consolidado
-│   ├── crear_tabla_economia_naranja.sql
-│   └── generar_reporte_consolidado.py
+│   ├── generar_reporte_consolidado.py        # Generador del reporte final
+│   └── CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx # Catálogo oficial (783 programas)
 │
 └── {AÑO}\{MES}\                              # Archivos fuente institucionales
     ├── PE-04_FORMACION NACIONAL *.xlsb
     ├── PRIMER AVANCE CUPOS DE FORMACION *.xlsb
     ├── PRIMER AVANCE EN APRENDICES *.xlsb
-    └── Metas SENA *.xlsx
+    ├── Metas SENA *.xlsx
+    └── CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx # Catálogo de programas
 ```
 
 ### Organización de Datos
@@ -194,7 +223,11 @@ python verificar_prerequisitos.py SEPTIEMBRE
 
 **Funciones auxiliares**:
 - `log_paso(numero, total, mensaje)`: Formato de mensajes
-- `ejecutar_comando(comando, descripcion)`: Wrapper para subprocess
+- `ejecutar_comando(comando, descripcion, check=True, env=None)`: Wrapper mejorado para subprocess
+  - Soporte para variables de entorno personalizadas
+  - Codificación UTF-8 con manejo de errores
+  - Logging detallado de STDOUT y STDERR en caso de fallo
+  - Muestra salida completa para diagnóstico de errores
 - `copiar_archivo(origen, destino, descripcion)`: Copia con validación
 
 **Pasos implementados**:
@@ -213,10 +246,13 @@ python generar_reporte_completo.py SEPTIEMBRE
 ```
 
 **Características**:
-- Ejecuta scripts externos mediante subprocess
-- Gestiona cambios de directorio de trabajo
-- Mueve archivos generados a ubicaciones correctas
+- Ejecuta scripts externos mediante subprocess con variables de entorno
+- Gestiona cambios de directorio de trabajo de forma segura
+- Copia archivos generados a `datos_intermedios/` usando rutas absolutas
+- Pasa parámetros a scripts mediante variables de entorno (Pasos 5, 6, 7, 8)
+- Pasa parámetros a scripts mediante argumentos de línea de comandos (Paso 3)
 - Reporte de tiempo total de ejecución
+- Manejo robusto de errores con logs detallados
 
 ### 4. limpiar_mes.py
 **Propósito**: Limpieza de archivos generados para re-ejecución

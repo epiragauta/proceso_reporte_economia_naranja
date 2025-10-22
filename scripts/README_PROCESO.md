@@ -92,7 +92,7 @@ El proceso ejecuta de manera secuencial los siguientes pasos:
   - `SENA Mensual Nacional {MES_CORTO} {AÑO}.xlsx`
 - **Salida**: `Reporte Consolidado Economía Naranja {MES_CORTO} {AÑO}.xlsx`
 - **Ubicación salida**: `datos_finales/`
-- **Script externo**: `REPORTE_ECONOMIA_NARANJA/generar_reporte_consolidado.py`
+- **Script externo**: `SCRIPTS/generar_reporte_consolidado.py`
 - **Contenido del reporte**:
   - Hoja 1: Datos de Economía Naranja (3998 registros)
   - Hoja 2: Oferta Disponible por Regional (33 regionales)

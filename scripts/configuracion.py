@@ -124,7 +124,7 @@ def obtener_config_mes(mes_nombre):
             'normalizar_metas': SCRIPTS / 'normalizar_metas_sena.py',
             'cruce_metas_avance': SCRIPTS / 'cruce_metas_avance_final.py',
             'generar_reporte_mensual_aprendices': SCRIPTS / 'generar_reporte_mensual_aprendices.py',
-            'generar_reporte_consolidado': DIR_REPORTE_ECONOMIA_NARANJA / 'generar_reporte_consolidado.py',
+            'generar_reporte_consolidado': SCRIPTS / 'generar_reporte_consolidado.py',
             'generar_reporte_completo': SCRIPTS / 'generar_reporte_completo.py'
         },
 

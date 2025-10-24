@@ -18,12 +18,13 @@ import pandas as pd
 import os
 
 # Configurar codificación para Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Importar configuración centralizada
 sys.path.insert(0, str(Path(__file__).parent))
 from configuracion import ANIO_TRABAJO
+
 
 class ImportadorFormacionSENA:
     """Importa y normaliza datos de formación SENA desde Excel a SQLite"""
@@ -32,7 +33,9 @@ class ImportadorFormacionSENA:
         self.mes = mes.upper()
         self.directorio = Path(directorio)
         self.anio = ANIO_TRABAJO
-        self.archivo_excel = self.directorio / f"PE-04_FORMACION NACIONAL {self.mes} {self.anio}.xlsb"
+        self.archivo_excel = (
+            self.directorio / f"PE-04_FORMACION NACIONAL {self.mes} {self.anio}.xlsb"
+        )
         self.archivo_db = self.directorio / f"sena_formacion_{self.mes.lower()}.db"
 
         # Buscar el catálogo de economía naranja (puede estar en varios lugares)
@@ -40,27 +43,28 @@ class ImportadorFormacionSENA:
 
         # Mapeo de columnas según la estructura de la BD existente
         self.tablas = {
-            'regionales': set(),
-            'centros': set(),
-            'niveles_formacion': set(),
-            'jornadas': set(),
-            'sectores_programa': set(),
-            'ocupaciones': set(),
-            'programas': set(),
-            'ubicaciones': set(),
-            'convenios': set(),
-            'programas_especiales': set(),
-            'empresas': set(),
-            'programas_economia_naranja': set()
+            "regionales": set(),
+            "centros": set(),
+            "niveles_formacion": set(),
+            "jornadas": set(),
+            "sectores_programa": set(),
+            "ocupaciones": set(),
+            "programas": set(),
+            "ubicaciones": set(),
+            "convenios": set(),
+            "programas_especiales": set(),
+            "empresas": set(),
+            "programas_economia_naranja": set(),
         }
 
     def _buscar_catalogo_economia_naranja(self):
         """Busca el archivo de catálogo de economía naranja en ubicaciones conocidas"""
         posibles_rutas = [
             self.directorio / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
-            self.directorio.parent / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
-            Path("C:/ws/sena/data/REPORTE_ECONOMIA_NARANJA/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx"),
-            Path(f"C:/ws/sena/data/{self.anio}/09-Septiembre/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
+            self.directorio.parent.parent.parent
+            / "CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx",
+            # Path("C:/ws/sena/data/REPORTE_ECONOMIA_NARANJA/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx"),
+            # Path(f"C:/ws/sena/data/{self.anio}/09-Septiembre/CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
         ]
 
         for ruta in posibles_rutas:
@@ -68,7 +72,9 @@ class ImportadorFormacionSENA:
                 print(f"[OK] Catálogo de Economía Naranja encontrado: {ruta}")
                 return ruta
 
-        print("[!] ADVERTENCIA: No se encontró el catálogo CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx")
+        print(
+            "[!] ADVERTENCIA: No se encontró el catálogo CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx"
+        )
         return None
 
     def _cargar_catalogo_economia_naranja(self, cursor):
@@ -80,28 +86,37 @@ class ImportadorFormacionSENA:
             df = pd.read_excel(self.catalogo_eco_naranja)
 
             # Validar que existan las columnas necesarias
-            columnas_requeridas = ['CODIGO', 'VERSION', 'NOMBRE DE PROGRAMA']
-            columnas_faltantes = [col for col in columnas_requeridas if col not in df.columns]
+            columnas_requeridas = ["CODIGO", "VERSION", "NOMBRE DE PROGRAMA"]
+            columnas_faltantes = [
+                col for col in columnas_requeridas if col not in df.columns
+            ]
 
             if columnas_faltantes:
-                print(f"[!] El catálogo no tiene las columnas esperadas: {', '.join(columnas_faltantes)}")
+                print(
+                    f"[!] El catálogo no tiene las columnas esperadas: {', '.join(columnas_faltantes)}"
+                )
                 return
 
             # Insertar cada programa en la tabla
             programas_insertados = 0
             for _, row in df.iterrows():
-                codigo = row['CODIGO']
-                version = row['VERSION']
-                nombre = row['NOMBRE DE PROGRAMA']
+                codigo = row["CODIGO"]
+                version = row["VERSION"]
+                nombre = row["NOMBRE DE PROGRAMA"]
 
                 if pd.notna(codigo) and pd.notna(version) and pd.notna(nombre):
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO programas_economia_naranja (CODIGO_PROGRAMA, VERSION_PROGRAMA, NOMBRE_PROGRAMA)
                         VALUES (?, ?, ?)
-                    """, (int(codigo), int(version), str(nombre)))
+                    """,
+                        (int(codigo), int(version), str(nombre)),
+                    )
                     programas_insertados += 1
 
-            print(f"[OK] Programas de Economía Naranja cargados: {programas_insertados}")
+            print(
+                f"[OK] Programas de Economía Naranja cargados: {programas_insertados}"
+            )
 
         except Exception as e:
             print(f"[!] Error al cargar catálogo de Economía Naranja: {e}")
@@ -319,8 +334,8 @@ class ImportadorFormacionSENA:
         # Buscar la fila de encabezados (la que contiene "IDENTIFICADOR_FICHA" o "CODIGO_REGIONAL")
         header_row_idx = None
         for idx, row in enumerate(rows[:20]):  # Buscar en las primeras 20 filas
-            row_str = ' '.join([str(cell).upper() if cell else '' for cell in row])
-            if 'IDENTIFICADOR_FICHA' in row_str or 'CODIGO_REGIONAL' in row_str:
+            row_str = " ".join([str(cell).upper() if cell else "" for cell in row])
+            if "IDENTIFICADOR_FICHA" in row_str or "CODIGO_REGIONAL" in row_str:
                 header_row_idx = idx
                 print(f"[OK] Encabezados encontrados en fila {idx + 1}")
                 break
@@ -330,7 +345,7 @@ class ImportadorFormacionSENA:
 
         # Extraer encabezados y datos
         headers = rows[header_row_idx]
-        data_rows = rows[header_row_idx + 1:]
+        data_rows = rows[header_row_idx + 1 :]
 
         # Normalizar nombres de encabezados (remover espacios extra, convertir a mayúsculas)
         headers = [str(h).strip().upper() if h else None for h in headers]
@@ -360,125 +375,172 @@ class ImportadorFormacionSENA:
                     return default
 
                 # Insertar/actualizar regional
-                codigo_regional = get_val('CODIGO_REGIONAL')
-                nombre_regional = get_val('NOMBRE_REGIONAL')
+                codigo_regional = get_val("CODIGO_REGIONAL")
+                nombre_regional = get_val("NOMBRE_REGIONAL")
                 if codigo_regional:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO regionales (CODIGO_REGIONAL, NOMBRE_REGIONAL)
                         VALUES (?, ?)
-                    """, (codigo_regional, nombre_regional))
+                    """,
+                        (codigo_regional, nombre_regional),
+                    )
 
                 # Insertar/actualizar centro
-                codigo_centro = get_val('CODIGO_CENTRO')
-                nombre_centro = get_val('NOMBRE_CENTRO')
+                codigo_centro = get_val("CODIGO_CENTRO")
+                nombre_centro = get_val("NOMBRE_CENTRO")
                 if codigo_centro:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO centros (CODIGO_CENTRO, NOMBRE_CENTRO, CODIGO_REGIONAL)
                         VALUES (?, ?, ?)
-                    """, (codigo_centro, nombre_centro, codigo_regional))
+                    """,
+                        (codigo_centro, nombre_centro, codigo_regional),
+                    )
 
                 # Insertar/actualizar nivel de formación
-                codigo_nivel = get_val('CODIGO_NIVEL_FORMACION')
-                nombre_nivel = get_val('NIVEL_FORMACION')
+                codigo_nivel = get_val("CODIGO_NIVEL_FORMACION")
+                nombre_nivel = get_val("NIVEL_FORMACION")
                 if codigo_nivel:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO niveles_formacion (CODIGO_NIVEL_FORMACION, NOMBRE_NIVEL_FORMACION)
                         VALUES (?, ?)
-                    """, (codigo_nivel, nombre_nivel))
+                    """,
+                        (codigo_nivel, nombre_nivel),
+                    )
 
                 # Insertar/actualizar jornada
-                codigo_jornada = get_val('CODIGO_JORNADA')
-                nombre_jornada = get_val('NOMBRE_JORNADA')
+                codigo_jornada = get_val("CODIGO_JORNADA")
+                nombre_jornada = get_val("NOMBRE_JORNADA")
                 if codigo_jornada:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO jornadas (CODIGO_JORNADA, NOMBRE_JORNADA)
                         VALUES (?, ?)
-                    """, (codigo_jornada, nombre_jornada))
+                    """,
+                        (codigo_jornada, nombre_jornada),
+                    )
 
                 # Insertar/actualizar sector programa
-                codigo_sector = get_val('CODIGO_SECTOR_PROGRAMA')
-                nombre_sector = get_val('NOMBRE_SECTOR_PROGRAMA')
+                codigo_sector = get_val("CODIGO_SECTOR_PROGRAMA")
+                nombre_sector = get_val("NOMBRE_SECTOR_PROGRAMA")
                 if codigo_sector:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO sectores_programa (CODIGO_SECTOR_PROGRAMA, NOMBRE_SECTOR_PROGRAMA)
                         VALUES (?, ?)
-                    """, (codigo_sector, nombre_sector))
+                    """,
+                        (codigo_sector, nombre_sector),
+                    )
 
                 # Insertar/actualizar ocupación
-                codigo_ocupacion = get_val('CODIGO_OCUPACION')
-                nombre_ocupacion = get_val('NOMBRE_OCUPACION')
+                codigo_ocupacion = get_val("CODIGO_OCUPACION")
+                nombre_ocupacion = get_val("NOMBRE_OCUPACION")
                 if codigo_ocupacion:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO ocupaciones (CODIGO_OCUPACION, NOMBRE_OCUPACION)
                         VALUES (?, ?)
-                    """, (codigo_ocupacion, nombre_ocupacion))
+                    """,
+                        (codigo_ocupacion, nombre_ocupacion),
+                    )
 
                 # Insertar/actualizar programa
-                codigo_programa = get_val('CODIGO_PROGRAMA')
-                version_programa = get_val('VERSION_PROGRAMA')
-                nombre_programa = get_val('NOMBRE_PROGRAMA_FORMACION')
+                codigo_programa = get_val("CODIGO_PROGRAMA")
+                version_programa = get_val("VERSION_PROGRAMA")
+                nombre_programa = get_val("NOMBRE_PROGRAMA_FORMACION")
                 tipo_programa = None  # No existe en el Excel
                 estado_programa = None  # No existe en el Excel
                 if codigo_programa and version_programa:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO programas
                         (CODIGO_PROGRAMA, VERSION_PROGRAMA, NOMBRE_PROGRAMA, TIPO_PROGRAMA,
                          ESTADO_PROGRAMA, CODIGO_OCUPACION, CODIGO_SECTOR_PROGRAMA)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """, (codigo_programa, version_programa, nombre_programa, tipo_programa,
-                          estado_programa, codigo_ocupacion, codigo_sector))
+                    """,
+                        (
+                            codigo_programa,
+                            version_programa,
+                            nombre_programa,
+                            tipo_programa,
+                            estado_programa,
+                            codigo_ocupacion,
+                            codigo_sector,
+                        ),
+                    )
 
                 # Insertar/actualizar ubicación
-                codigo_pais = get_val('CODIGO_PAIS_CURSO')
-                codigo_depto = get_val('CODIGO_DEPARTAMENTO_CURSO')
-                codigo_muni = get_val('CODIGO_MUNICIPIO_CURSO')
-                nombre_pais = get_val('NOMBRE_PAIS_CURSO')
-                nombre_depto = get_val('NOMBRE_DEPARTAMENTO_CURSO')
-                nombre_muni = get_val('NOMBRE_MUNICIPIO_CURSO')
+                codigo_pais = get_val("CODIGO_PAIS_CURSO")
+                codigo_depto = get_val("CODIGO_DEPARTAMENTO_CURSO")
+                codigo_muni = get_val("CODIGO_MUNICIPIO_CURSO")
+                nombre_pais = get_val("NOMBRE_PAIS_CURSO")
+                nombre_depto = get_val("NOMBRE_DEPARTAMENTO_CURSO")
+                nombre_muni = get_val("NOMBRE_MUNICIPIO_CURSO")
                 if codigo_pais and codigo_depto and codigo_muni:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO ubicaciones
                         (CODIGO_PAIS, CODIGO_DEPARTAMENTO, CODIGO_MUNICIPIO,
                          NOMBRE_PAIS, NOMBRE_DEPARTAMENTO, NOMBRE_MUNICIPIO)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, (codigo_pais, codigo_depto, codigo_muni,
-                          nombre_pais, nombre_depto, nombre_muni))
+                    """,
+                        (
+                            codigo_pais,
+                            codigo_depto,
+                            codigo_muni,
+                            nombre_pais,
+                            nombre_depto,
+                            nombre_muni,
+                        ),
+                    )
 
                 # Insertar/actualizar convenio
-                codigo_convenio = get_val('CODIGO_CONVENIO')
-                nombre_convenio = get_val('NOMBRE_CONVENIO')
+                codigo_convenio = get_val("CODIGO_CONVENIO")
+                nombre_convenio = get_val("NOMBRE_CONVENIO")
                 if codigo_convenio:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO convenios (CODIGO_CONVENIO, NOMBRE_CONVENIO)
                         VALUES (?, ?)
-                    """, (codigo_convenio, nombre_convenio))
+                    """,
+                        (codigo_convenio, nombre_convenio),
+                    )
 
                 # Insertar/actualizar programa especial
-                codigo_prog_esp = get_val('CODIGO_PROGRAMA_ESPECIAL')
-                nombre_prog_esp = get_val('NOMBRE_PROGRAMA_ESPECIAL')
+                codigo_prog_esp = get_val("CODIGO_PROGRAMA_ESPECIAL")
+                nombre_prog_esp = get_val("NOMBRE_PROGRAMA_ESPECIAL")
                 if codigo_prog_esp:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO programas_especiales
                         (CODIGO_PROGRAMA_ESPECIAL, NOMBRE_PROGRAMA_ESPECIAL)
                         VALUES (?, ?)
-                    """, (codigo_prog_esp, nombre_prog_esp))
+                    """,
+                        (codigo_prog_esp, nombre_prog_esp),
+                    )
 
                 # Insertar/actualizar empresa
-                num_id_empresa = get_val('NUMERO_IDENTIFICACION_EMPRESA')
-                nombre_empresa = get_val('NOMBRE_EMPRESA')
+                num_id_empresa = get_val("NUMERO_IDENTIFICACION_EMPRESA")
+                nombre_empresa = get_val("NOMBRE_EMPRESA")
                 if num_id_empresa:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR IGNORE INTO empresas
                         (NUMERO_IDENTIFICACION_EMPRESA, NOMBRE_EMPRESA)
                         VALUES (?, ?)
-                    """, (num_id_empresa, nombre_empresa))
+                    """,
+                        (num_id_empresa, nombre_empresa),
+                    )
 
                 # No hay columna de economía naranja directa, se infiere de otro modo si es necesario
 
                 # Insertar ficha principal
-                identificador_ficha = get_val('IDENTIFICADOR_FICHA')
+                identificador_ficha = get_val("IDENTIFICADOR_FICHA")
                 if identificador_ficha:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT OR REPLACE INTO fichas (
                             IDENTIFICADOR_FICHA, IDENTIFICADOR_UNICO_FICHA, ESTADO_CURSO,
                             CODIGO_NIVEL_FORMACION, CODIGO_JORNADA, A_LA_MEDIDA,
@@ -495,24 +557,46 @@ class ImportadorFormacionSENA:
                             TOTAL_APRENDICES_ACTIVO, DURACION_PROGRAMA, NOMBRE_NUEVO_SECTOR
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        identificador_ficha, get_val('IDENTIFICADOR_UNICO_FICHA'),
-                        get_val('ESTADO_CURSO'), codigo_nivel, codigo_jornada,
-                        get_val('A_LA_MEDIDA'), get_val('FECHA_INICIO_FICHA'),
-                        get_val('FECHA_TERMINACION_FICHA'), get_val('ETAPA_FICHA'),
-                        get_val('MODALIDAD_FORMACION'), get_val('NOMBRE_RESPONSABLE'),
-                        codigo_centro, num_id_empresa, codigo_programa, version_programa,
-                        codigo_pais, codigo_depto, codigo_muni, codigo_convenio,
-                        get_val('AMPLICACION_COBERTURA'), get_val('DESTINO INFORMACIÓN'),
-                        codigo_prog_esp, get_val('NUMERO_CURSOS'),
-                        get_val('TOTAL_APRENDICES_MASCULINOS'), get_val('TOTAL_APRENDICES_FEMENINOS'),
-                        get_val('TOTAL_APRENDICES_NO_BINARIO'), get_val('TOTAL_APRENDICES'),
-                        get_val('HORAS_PLANTA'), get_val('HORAS_CONTRATISTAS'),
-                        get_val('HORAS_CONTRATISTAS_EXTERNOS'), get_val('HORAS_MONITORES'),
-                        get_val('HORAS_INST_EMPRESA'), get_val('TOTAL_HORAS'),
-                        get_val('TOTAL_APRENDICES_ACTIVO'), get_val('DURACION_PROGRAMA'),
-                        get_val('NOMBRE_NUEVO_SECTOR')
-                    ))
+                    """,
+                        (
+                            identificador_ficha,
+                            get_val("IDENTIFICADOR_UNICO_FICHA"),
+                            get_val("ESTADO_CURSO"),
+                            codigo_nivel,
+                            codigo_jornada,
+                            get_val("A_LA_MEDIDA"),
+                            get_val("FECHA_INICIO_FICHA"),
+                            get_val("FECHA_TERMINACION_FICHA"),
+                            get_val("ETAPA_FICHA"),
+                            get_val("MODALIDAD_FORMACION"),
+                            get_val("NOMBRE_RESPONSABLE"),
+                            codigo_centro,
+                            num_id_empresa,
+                            codigo_programa,
+                            version_programa,
+                            codigo_pais,
+                            codigo_depto,
+                            codigo_muni,
+                            codigo_convenio,
+                            get_val("AMPLICACION_COBERTURA"),
+                            get_val("DESTINO INFORMACIÓN"),
+                            codigo_prog_esp,
+                            get_val("NUMERO_CURSOS"),
+                            get_val("TOTAL_APRENDICES_MASCULINOS"),
+                            get_val("TOTAL_APRENDICES_FEMENINOS"),
+                            get_val("TOTAL_APRENDICES_NO_BINARIO"),
+                            get_val("TOTAL_APRENDICES"),
+                            get_val("HORAS_PLANTA"),
+                            get_val("HORAS_CONTRATISTAS"),
+                            get_val("HORAS_CONTRATISTAS_EXTERNOS"),
+                            get_val("HORAS_MONITORES"),
+                            get_val("HORAS_INST_EMPRESA"),
+                            get_val("TOTAL_HORAS"),
+                            get_val("TOTAL_APRENDICES_ACTIVO"),
+                            get_val("DURACION_PROGRAMA"),
+                            get_val("NOMBRE_NUEVO_SECTOR"),
+                        ),
+                    )
                     fichas_procesadas += 1
 
             except Exception as e:
@@ -530,24 +614,24 @@ class ImportadorFormacionSENA:
 
     def mostrar_estadisticas(self, cursor):
         """Muestra estadísticas de la importación"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print(f"ESTADÍSTICAS DE IMPORTACIÓN - {self.mes} {self.anio}")
-        print("="*60)
+        print("=" * 60)
 
         tablas_stats = [
-            ('regionales', 'regionales'),
-            ('centros', 'centros de formación'),
-            ('niveles_formacion', 'niveles de formación'),
-            ('jornadas', 'jornadas'),
-            ('sectores_programa', 'sectores de programa'),
-            ('ocupaciones', 'ocupaciones'),
-            ('programas', 'programas'),
-            ('ubicaciones', 'ubicaciones'),
-            ('convenios', 'convenios'),
-            ('programas_especiales', 'programas especiales'),
-            ('empresas', 'empresas'),
-            ('programas_economia_naranja', 'programas economía naranja'),
-            ('fichas', 'fichas de formación')
+            ("regionales", "regionales"),
+            ("centros", "centros de formación"),
+            ("niveles_formacion", "niveles de formación"),
+            ("jornadas", "jornadas"),
+            ("sectores_programa", "sectores de programa"),
+            ("ocupaciones", "ocupaciones"),
+            ("programas", "programas"),
+            ("ubicaciones", "ubicaciones"),
+            ("convenios", "convenios"),
+            ("programas_especiales", "programas especiales"),
+            ("empresas", "empresas"),
+            ("programas_economia_naranja", "programas economía naranja"),
+            ("fichas", "fichas de formación"),
         ]
 
         for tabla, descripcion in tablas_stats:
@@ -555,13 +639,13 @@ class ImportadorFormacionSENA:
             count = cursor.fetchone()[0]
             print(f"  {descripcion.capitalize()}: {count:,}")
 
-        print("="*60)
+        print("=" * 60)
 
     def ejecutar(self):
         """Ejecuta el proceso completo de importación"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print(f"IMPORTADOR DE FORMACIÓN SENA - {self.mes} {self.anio}")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
         try:
             # Validar archivo
@@ -580,6 +664,7 @@ class ImportadorFormacionSENA:
             print(f"\n[ERROR] Error durante la importacion: {e}\n")
             raise
 
+
 def main():
     """Función principal"""
     if len(sys.argv) < 3:
@@ -591,6 +676,7 @@ def main():
     mes = sys.argv[2]
     importador = ImportadorFormacionSENA(directorio, mes)
     importador.ejecutar()
+
 
 if __name__ == "__main__":
     main()

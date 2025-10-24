@@ -6,8 +6,8 @@ estén disponibles antes de iniciar el proceso de generación del reporte.
 """
 
 import sys
-from pathlib import Path
-from scripts.configuracion import obtener_config_mes, MESES
+from configuracion import obtener_config_mes, MESES
+
 
 def verificar_python():
     """Verifica la versión de Python"""
@@ -18,7 +18,7 @@ def verificar_python():
         return True
     else:
         print(f"   ✗ Python {version.major}.{version.minor}.{version.micro}")
-        print(f"   Se requiere Python 3.10 o superior")
+        print("   Se requiere Python 3.10 o superior")
         return False
 
 
@@ -27,17 +27,17 @@ def verificar_dependencias():
     print("\n2. Verificando dependencias de Python...")
 
     dependencias = {
-        'pandas': 'Manipulación de datos',
-        'openpyxl': 'Lectura/escritura de Excel XLSX',
-        'pyxlsb': 'Lectura de Excel XLSB',
-        'sqlite3': 'Base de datos SQLite'
+        "pandas": "Manipulación de datos",
+        "openpyxl": "Lectura/escritura de Excel XLSX",
+        "pyxlsb": "Lectura de Excel XLSB",
+        "sqlite3": "Base de datos SQLite",
     }
 
     todas_ok = True
 
     for modulo, descripcion in dependencias.items():
         try:
-            if modulo == 'sqlite3':
+            if modulo == "sqlite3":
                 import sqlite3
             else:
                 __import__(modulo)
@@ -57,7 +57,7 @@ def verificar_archivos_entrada(config):
     """Verifica que todos los archivos de entrada existan"""
     print(f"\n3. Verificando archivos de entrada para {config['mes_nombre']}...")
 
-    archivos = config['archivos_entrada']
+    archivos = config["archivos_entrada"]
     todos_existen = True
 
     for nombre, ruta in archivos.items():
@@ -77,8 +77,8 @@ def verificar_scripts():
     print("\n4. Verificando scripts del sistema...")
 
     # Obtener una configuración de ejemplo para verificar scripts
-    config = obtener_config_mes('SEPTIEMBRE')
-    scripts = config['scripts']
+    config = obtener_config_mes("SEPTIEMBRE")
+    scripts = config["scripts"]
 
     todos_existen = True
 
@@ -97,14 +97,20 @@ def verificar_directorios_base():
     """Verifica que los directorios base existan"""
     print("\n5. Verificando estructura de directorios...")
 
-    from scripts.configuracion import DIR_BASE, DIR_PE04, DIR_METAS, DIR_APRENDICES, DIR_REPORTE_ECONOMIA_NARANJA
+    from configuracion import (
+        DIR_BASE,
+        DIR_PE04,
+        DIR_METAS,
+        DIR_APRENDICES,
+        DIR_REPORTE_ECONOMIA_NARANJA,
+    )
 
     directorios = {
-        'DIR_BASE': DIR_BASE,
-        'DIR_PE04': DIR_PE04,
-        'DIR_METAS': DIR_METAS,
-        'DIR_APRENDICES': DIR_APRENDICES,
-        'DIR_REPORTE_ECONOMIA_NARANJA': DIR_REPORTE_ECONOMIA_NARANJA
+        "DIR_BASE": DIR_BASE,
+        "DIR_PE04": DIR_PE04,
+        "DIR_METAS": DIR_METAS,
+        "DIR_APRENDICES": DIR_APRENDICES,
+        "DIR_REPORTE_ECONOMIA_NARANJA": DIR_REPORTE_ECONOMIA_NARANJA,
     }
 
     todos_existen = True
@@ -126,7 +132,7 @@ def verificar_espacio_disco(config):
     import shutil
 
     try:
-        stat = shutil.disk_usage(config['dir_mes'])
+        stat = shutil.disk_usage(config["dir_mes"])
         libre_gb = stat.free / (1024**3)
 
         if libre_gb >= 5:
@@ -134,7 +140,7 @@ def verificar_espacio_disco(config):
             return True
         else:
             print(f"   ⚠ Espacio disponible: {libre_gb:.1f} GB")
-            print(f"   Se recomienda al menos 5 GB libres")
+            print("   Se recomienda al menos 5 GB libres")
             return False
     except Exception as e:
         print(f"   ⚠ No se pudo verificar espacio en disco: {e}")
@@ -142,14 +148,14 @@ def verificar_espacio_disco(config):
 
 
 def main():
-    print("="*70)
+    print("=" * 70)
     print(" VERIFICADOR DE PREREQUISITOS - REPORTE ECONOMÍA NARANJA")
-    print("="*70)
+    print("=" * 70)
 
     # Validar argumentos
     if len(sys.argv) < 2:
         print("\nUso: python verificar_prerequisitos.py <MES>")
-        print(f"\nMeses válidos:")
+        print("\nMeses válidos:")
         for mes in MESES.keys():
             print(f"  - {mes}")
         sys.exit(1)
@@ -180,9 +186,9 @@ def main():
     resultados.append(("Espacio en disco", verificar_espacio_disco(config)))
 
     # Resumen
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(" RESUMEN DE VERIFICACIÓN")
-    print("="*70)
+    print("=" * 70)
 
     todas_ok = True
     for nombre, resultado in resultados:
@@ -191,11 +197,11 @@ def main():
         if not resultado:
             todas_ok = False
 
-    print("="*70)
+    print("=" * 70)
 
     if todas_ok:
         print("\n✓ TODOS LOS PREREQUISITOS ESTÁN LISTOS")
-        print(f"\nPuedes ejecutar:")
+        print("\nPuedes ejecutar:")
         print(f"   python generar_reporte_completo.py {mes_nombre}")
         sys.exit(0)
     else:
@@ -204,5 +210,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

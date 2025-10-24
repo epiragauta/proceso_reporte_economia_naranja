@@ -24,11 +24,12 @@ from configuracion import obtener_config_mes, crear_directorios_mes, MESES
 # FUNCIONES AUXILIARES
 # ============================================
 
+
 def log_paso(numero, total, mensaje):
     """Imprime un mensaje de log con formato consistente"""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f" PASO {numero}/{total}: {mensaje}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
 
 def ejecutar_comando(comando, descripcion, check=True, env=None):
@@ -53,16 +54,16 @@ def ejecutar_comando(comando, descripcion, check=True, env=None):
             check=check,
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            errors='replace',
-            env=env
+            encoding="utf-8",
+            errors="replace",
+            env=env,
         )
 
         if result.returncode == 0:
             print(f"✓ {descripcion} - EXITOSO")
             if result.stdout:
                 # Mostrar solo las últimas 10 líneas de output
-                lineas = result.stdout.strip().split('\n')
+                lineas = result.stdout.strip().split("\n")
                 if len(lineas) > 10:
                     print("  [...]")
                     for linea in lineas[-10:]:
@@ -74,12 +75,12 @@ def ejecutar_comando(comando, descripcion, check=True, env=None):
         else:
             print(f"✗ {descripcion} - FALLÓ")
             if result.stdout:
-                print(f"\n  STDOUT:")
-                for linea in result.stdout.strip().split('\n'):
+                print("\n  STDOUT:")
+                for linea in result.stdout.strip().split("\n"):
                     print(f"    {linea}")
             if result.stderr:
-                print(f"\n  STDERR:")
-                for linea in result.stderr.strip().split('\n'):
+                print("\n  STDERR:")
+                for linea in result.stderr.strip().split("\n"):
                     print(f"    {linea}")
             return False
 
@@ -87,12 +88,12 @@ def ejecutar_comando(comando, descripcion, check=True, env=None):
         print(f"✗ {descripcion} - ERROR")
         print(f"  Código de salida: {e.returncode}")
         if e.stdout:
-            print(f"\n  STDOUT:")
-            for linea in e.stdout.strip().split('\n'):
+            print("\n  STDOUT:")
+            for linea in e.stdout.strip().split("\n"):
                 print(f"    {linea}")
         if e.stderr:
-            print(f"\n  STDERR:")
-            for linea in e.stderr.strip().split('\n'):
+            print("\n  STDERR:")
+            for linea in e.stderr.strip().split("\n"):
                 print(f"    {linea}")
         if check:
             raise
@@ -106,7 +107,7 @@ def copiar_archivo(origen, destino, descripcion):
     print(f"  Destino: {destino}")
 
     if not origen.exists():
-        print(f"✗ Archivo origen no existe")
+        print("✗ Archivo origen no existe")
         return False
 
     try:
@@ -123,6 +124,7 @@ def copiar_archivo(origen, destino, descripcion):
 # ============================================
 # PASOS DEL PROCESO
 # ============================================
+
 
 def paso_1_crear_directorios(config):
     """PASO 1: Crear estructura de directorios"""
@@ -141,42 +143,38 @@ def paso_2_copiar_archivos_entrada(config):
     log_paso(2, 8, "Copiar archivos de entrada")
 
     # Copiar archivos de entrada a datos_intermedios para trazabilidad
-    archivos = config['archivos_entrada']
-    dir_destino = config['dir_datos_intermedios']
+    archivos = config["archivos_entrada"]
+    dir_destino = config["dir_datos_intermedios"]
 
     todo_ok = True
 
     # Copiar PE-04 Formación
     todo_ok &= copiar_archivo(
-        archivos['pe04_formacion'],
-        dir_destino / archivos['pe04_formacion'].name,
-        "PE-04 Formación"
+        archivos["pe04_formacion"],
+        dir_destino / archivos["pe04_formacion"].name,
+        "PE-04 Formación",
     )
 
     # Copiar Avance Cupos
     todo_ok &= copiar_archivo(
-        archivos['avance_cupos'],
-        dir_destino / archivos['avance_cupos'].name,
-        "Avance Cupos"
+        archivos["avance_cupos"],
+        dir_destino / archivos["avance_cupos"].name,
+        "Avance Cupos",
     )
 
     # Copiar Avance Aprendices
     todo_ok &= copiar_archivo(
-        archivos['avance_aprendices'],
-        dir_destino / archivos['avance_aprendices'].name,
-        "Avance Aprendices"
+        archivos["avance_aprendices"],
+        dir_destino / archivos["avance_aprendices"].name,
+        "Avance Aprendices",
     )
 
     # Copiar Metas SENA (si no existe ya)
-    metas_destino = dir_destino / archivos['metas_sena'].name
+    metas_destino = dir_destino / archivos["metas_sena"].name
     if not metas_destino.exists():
-        todo_ok &= copiar_archivo(
-            archivos['metas_sena'],
-            metas_destino,
-            "Metas SENA"
-        )
+        todo_ok &= copiar_archivo(archivos["metas_sena"], metas_destino, "Metas SENA")
     else:
-        print(f"\n→ Metas SENA ya existe en destino (omitiendo copia)")
+        print("\n→ Metas SENA ya existe en destino (omitiendo copia)")
 
     return todo_ok
 
@@ -187,11 +185,14 @@ def paso_3_generar_bd_formacion(config):
 
     # Ejecutar script de importación con directorio y mes como parámetros
     return ejecutar_comando(
-        ['python', str(config['scripts']['importar_pe04']),
-         str(config['dir_datos_intermedios']),
-         config['mes_nombre']],
+        [
+            "python",
+            str(config["scripts"]["importar_pe04"]),
+            str(config["dir_datos_intermedios"]),
+            config["mes_nombre"],
+        ],
         f"Importar datos de PE-04 para {config['mes_nombre']}",
-        check=True
+        check=True,
     )
 
 
@@ -200,23 +201,23 @@ def paso_4_crear_tabla_economia_naranja(config):
     log_paso(4, 8, "Crear tabla de economía naranja")
 
     # Leer SQL template
-    sql_file = config['scripts']['crear_tabla_economia_naranja']
+    sql_file = config["scripts"]["crear_tabla_economia_naranja"]
 
     if not sql_file.exists():
         print(f"✗ Archivo SQL no encontrado: {sql_file}")
         return False
 
     try:
-        with open(sql_file, 'r', encoding='utf-8') as f:
+        with open(sql_file, "r", encoding="utf-8") as f:
             sql_template = f.read()
 
         # Reemplazar variables en el SQL
         # Cambiar SEPTIEMBRE por el mes actual en todos los lugares
-        sql_ajustado = sql_template.replace('SEPTIEMBRE', config['mes_nombre'].upper())
-        sql_ajustado = sql_ajustado.replace('AGOSTO', config['mes_nombre'].upper())
+        sql_ajustado = sql_template.replace("SEPTIEMBRE", config["mes_nombre"].upper())
+        sql_ajustado = sql_ajustado.replace("SEPTIEMBRE", config["mes_nombre"].upper())
 
         # Conectar a la BD y ejecutar
-        bd_formacion = config['archivos_intermedios']['bd_formacion']
+        bd_formacion = config["archivos_intermedios"]["bd_formacion"]
 
         if not bd_formacion.exists():
             print(f"✗ Base de datos de formación no existe: {bd_formacion}")
@@ -231,7 +232,9 @@ def paso_4_crear_tabla_economia_naranja(config):
         conn.commit()
 
         # Verificar que la tabla se creó
-        cursor.execute(f"SELECT COUNT(*) FROM {config['tablas_bd']['economia_naranja']}")
+        cursor.execute(
+            f"SELECT COUNT(*) FROM {config['tablas_bd']['economia_naranja']}"
+        )
         count = cursor.fetchone()[0]
 
         conn.close()
@@ -248,106 +251,108 @@ def paso_5_generar_bd_metas(config):
     """PASO 5: Generar base de datos de metas"""
     log_paso(5, 8, "Generar base de datos de metas")
 
-    # Preparar variables de entorno
-    env = os.environ.copy()
-    env['ARCHIVO_METAS'] = str(config['dir_datos_intermedios'] / config['archivos_entrada']['metas_sena'].name)
-    env['BD_SALIDA'] = str(config['archivos_intermedios']['bd_metas'])
-
-    # Cambiar al directorio de metas para ejecutar el script
-    cwd_original = os.getcwd()
-    os.chdir(config['scripts']['normalizar_metas'].parent)
+    # Archivo de metas
+    archivo_metas = (
+        config["dir_datos_intermedios"] / config["archivos_entrada"]["metas_sena"].name
+    )
 
     try:
         resultado = ejecutar_comando(
-            ['python', 'normalizar_metas_sena.py'],
+            [
+                "python",
+                str(config["scripts"]["normalizar_metas"]),
+                str(archivo_metas),
+            ],
             "Normalizar metas SENA",
-            check=True
+            check=True,
         )
         return resultado
     finally:
-        os.chdir(cwd_original)
+        pass
 
 
 def paso_6_calcular_cupos_disponibles(config):
     """PASO 6: Calcular cupos disponibles"""
     log_paso(6, 8, "Calcular cupos disponibles (META - AVANCE)")
 
-    # Preparar variables de entorno
-    env = os.environ.copy()
-    env['BD_METAS'] = str(config['archivos_intermedios']['bd_metas'])
-    env['ARCHIVO_AVANCE'] = str(config['dir_datos_intermedios'] / config['archivos_entrada']['avance_cupos'].name)
-    env['ARCHIVO_SALIDA'] = str(config['archivos_intermedios']['cupos_disponibles_xlsx'])
-
-    # Cambiar al directorio de metas
-    cwd_original = os.getcwd()
-    os.chdir(config['scripts']['cruce_metas_avance'].parent)
-
+    archivo_avance = config["archivos_entrada"]["avance_cupos"]
     try:
         resultado = ejecutar_comando(
-            ['python', 'cruce_metas_avance_final.py'],
+            [
+                "python",
+                str(config["scripts"]["cruce_metas_avance"]),
+                str(archivo_avance),
+            ],
             "Calcular cupos disponibles",
-            check=True
+            check=True,
         )
 
         # Copiar archivos generados a datos_intermedios
         if resultado:
             # El archivo se genera en el directorio de metas
-            archivo_xlsx_origen = config['scripts']['cruce_metas_avance'].parent / 'cupos_disponibles_por_regional_2025.xlsx'
-            archivo_csv_origen = config['scripts']['cruce_metas_avance'].parent / 'cupos_disponibles_por_regional_2025.csv'
+            archivo_xlsx_origen = (
+                config["scripts"]["cruce_metas_avance"].parent
+                / "cupos_disponibles_por_regional_2025.xlsx"
+            )
+            archivo_csv_origen = (
+                config["scripts"]["cruce_metas_avance"].parent
+                / "cupos_disponibles_por_regional_2025.csv"
+            )
 
             if archivo_xlsx_origen.exists():
                 shutil.copy2(
                     str(archivo_xlsx_origen),
-                    str(config['archivos_intermedios']['cupos_disponibles_xlsx'])
+                    str(config["archivos_intermedios"]["cupos_disponibles_xlsx"]),
                 )
-                print(f"\n✓ Archivo XLSX copiado a datos_intermedios")
+                print("\n✓ Archivo XLSX copiado a datos_intermedios")
 
             if archivo_csv_origen.exists():
                 shutil.copy2(
                     str(archivo_csv_origen),
-                    str(config['archivos_intermedios']['cupos_disponibles_csv'])
+                    str(config["archivos_intermedios"]["cupos_disponibles_csv"]),
                 )
-                print(f"✓ Archivo CSV copiado a datos_intermedios")
+                print("✓ Archivo CSV copiado a datos_intermedios")
 
         return resultado
     finally:
-        os.chdir(cwd_original)
+        pass
 
 
 def paso_7_generar_reporte_aprendices(config):
     """PASO 7: Generar reporte de aprendices"""
     log_paso(7, 8, "Generar reporte mensual de aprendices")
 
-    # Preparar variables de entorno
-    env = os.environ.copy()
-    env['ARCHIVO_APRENDICES'] = str(config['dir_datos_intermedios'] / config['archivos_entrada']['avance_aprendices'].name)
-    env['ARCHIVO_SALIDA'] = str(config['archivos_intermedios']['reporte_aprendices'])
-
-    # Cambiar al directorio de aprendices
-    cwd_original = os.getcwd()
-    os.chdir(config['scripts']['generar_reporte_mensual_aprendices'].parent)
+    archivo_avance = config["archivos_entrada"]["avance_aprendices"]
 
     try:
         resultado = ejecutar_comando(
-            ['python', 'generar_reporte_mensual_aprendices.py'],
+            [
+                "python",
+                str(config["scripts"]["generar_reporte_mensual_aprendices"]),
+                str(archivo_avance),
+            ],
             "Generar reporte de aprendices",
-            check=True
+            check=True,
         )
 
         # Copiar archivo generado a datos_intermedios
         if resultado:
             # El archivo se genera en el directorio de scripts de aprendices
-            archivo_generado = config['scripts']['generar_reporte_mensual_aprendices'].parent / f"SENA Mensual Nacional {config['mes_corto']} {config['anio']}.xlsx"
+            archivo_generado = (
+                config["scripts"]["generar_reporte_mensual_aprendices"].parent
+                / f"SENA Mensual Nacional {config['mes_corto']} {config['anio']}.xlsx"
+            )
             if archivo_generado.exists():
                 shutil.copy2(
                     str(archivo_generado),
-                    str(config['archivos_intermedios']['reporte_aprendices'])
+                    str(config["archivos_intermedios"]["reporte_aprendices"]),
                 )
-                print(f"\n✓ Reporte de aprendices copiado a datos_intermedios")
+                print("\n✓ Reporte de aprendices copiado a datos_intermedios")
 
         return resultado
     finally:
-        os.chdir(cwd_original)
+        pass
+        # os.chdir(cwd_original)
 
 
 def paso_8_generar_reporte_consolidado(config):
@@ -356,35 +361,42 @@ def paso_8_generar_reporte_consolidado(config):
 
     # Preparar variables de entorno
     env = os.environ.copy()
-    env['BD_FORMACION'] = str(config['archivos_intermedios']['bd_formacion'])
-    env['CUPOS_DISPONIBLES'] = str(config['archivos_intermedios']['cupos_disponibles_xlsx'])
-    env['REPORTE_APRENDICES'] = str(config['archivos_intermedios']['reporte_aprendices'])
-    env['ARCHIVO_SALIDA'] = str(config['archivos_finales']['reporte_consolidado'])
-    env['MES_TRABAJO'] = config['mes_nombre']
-    env['MES_CORTO'] = config['mes_corto']
-    env['ANIO'] = str(config['anio'])
+    env["BD_FORMACION"] = str(config["archivos_intermedios"]["bd_formacion"])
+    print("aquiii")
+    env["CUPOS_DISPONIBLES"] = str(
+        config["archivos_intermedios"]["cupos_disponibles_xlsx"]
+    )
+    env["REPORTE_APRENDICES"] = str(
+        config["archivos_intermedios"]["reporte_aprendices"]
+    )
+    env["ARCHIVO_SALIDA"] = str(config["archivos_finales"]["reporte_consolidado"])
+    env["MES_TRABAJO"] = config["mes_nombre"]
+    env["MES_CORTO"] = config["mes_corto"]
+    env["ANIO"] = str(config["anio"])
 
     # Cambiar al directorio del reporte consolidado
     cwd_original = os.getcwd()
-    os.chdir(config['scripts']['generar_reporte_consolidado'].parent)
+    os.chdir(config["scripts"]["generar_reporte_consolidado"].parent)
 
     try:
         resultado = ejecutar_comando(
-            ['python', 'generar_reporte_consolidado.py'],
+            ["python", "generar_reporte_consolidado.py"],
             "Generar reporte consolidado",
             check=True,
-            env=env
+            env=env,
         )
 
         # Mover archivo generado a datos_finales
         if resultado:
-            archivo_generado = Path(f"Reporte Consolidado Economía Naranja {config['mes_corto']} {config['anio']}.xlsx")
+            archivo_generado = Path(
+                f"Reporte Consolidado Economía Naranja {config['mes_corto']} {config['anio']}.xlsx"
+            )
             if archivo_generado.exists():
                 shutil.move(
                     str(archivo_generado),
-                    str(config['archivos_finales']['reporte_consolidado'])
+                    str(config["archivos_finales"]["reporte_consolidado"]),
                 )
-                print(f"\n✓ Reporte final guardado en:")
+                print("\n✓ Reporte final guardado en:")
                 print(f"  {config['archivos_finales']['reporte_consolidado']}")
 
         return resultado
@@ -396,18 +408,19 @@ def paso_8_generar_reporte_consolidado(config):
 # FUNCIÓN PRINCIPAL
 # ============================================
 
+
 def main():
-    print("="*70)
+    print("=" * 70)
     print(" GENERACIÓN COMPLETA DEL REPORTE DE ECONOMÍA NARANJA")
-    print("="*70)
+    print("=" * 70)
     print(f" Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("="*70)
+    print("=" * 70)
 
     # Validar argumentos
     if len(sys.argv) < 2:
         print("\n✗ Error: Falta especificar el mes")
         print("\nUso: python generar_reporte_completo.py <MES>")
-        print(f"\nMeses válidos:")
+        print("\nMeses válidos:")
         for mes in MESES.keys():
             print(f"  - {mes}")
         sys.exit(1)
@@ -438,7 +451,7 @@ def main():
         paso_5_generar_bd_metas,
         paso_6_calcular_cupos_disponibles,
         paso_7_generar_reporte_aprendices,
-        paso_8_generar_reporte_consolidado
+        paso_8_generar_reporte_consolidado,
     ]
 
     for paso in pasos:
@@ -450,6 +463,7 @@ def main():
         except Exception as e:
             print(f"\n✗ EXCEPCIÓN EN {paso.__name__}: {e}")
             import traceback
+
             traceback.print_exc()
             sys.exit(1)
 
@@ -457,15 +471,15 @@ def main():
     fin = datetime.now()
     duracion = (fin - inicio).total_seconds()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(" PROCESO COMPLETADO EXITOSAMENTE")
-    print("="*70)
+    print("=" * 70)
     print(f"\n✓ Reporte generado: {config['archivos_finales']['reporte_consolidado']}")
-    print(f"\n⏱ Tiempo total: {duracion:.1f} segundos ({duracion/60:.1f} minutos)")
+    print(f"\n⏱ Tiempo total: {duracion:.1f} segundos ({duracion / 60:.1f} minutos)")
     print(f"\n📁 Archivos intermedios en: {config['dir_datos_intermedios']}")
     print(f"📁 Reporte final en: {config['dir_datos_finales']}")
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

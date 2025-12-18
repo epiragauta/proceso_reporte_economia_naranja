@@ -368,17 +368,3 @@ Para cambiar de año (ejemplo: 2025 → 2026):
 
 3. Verificar estructura de directorios en `{AÑO}\{MES}\`
 
-## Contacto y Soporte
-
-Para soporte técnico o modificaciones al sistema:
-- Revisar logs detallados de ejecución
-- Verificar prerequisitos con script de validación
-- Documentar errores con capturas de pantalla
-- Contactar al equipo de desarrollo institucional SENA
-
----
-
-**Versión del documento**: 1.0
-**Fecha**: Octubre 2025
-**Institución**: SENA Colombia
-**Sistema**: Proceso Automatizado de Reporte de Economía Naranja

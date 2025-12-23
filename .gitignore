@@ -1,6 +1,45 @@
+# Python
 __pycache__/
-*.pyc
-*.xlsx
-*.xlsb
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# PyInstaller
+build/
+dist/
+*.spec
+release/
+
+# Archivos de datos temporales
 *.db
 *.log
+*.tmp
+
+# Archivos Excel de entrada/salida (NO subir datos sensibles)
+*.xlsx
+*.xlsb
+!CATALOGO_PROGRAMAS_ECONOMIA_NARANJA.xlsx
+!Nueva_Hoja_SENA.xlsx
+
+# Directorios de salida
+MESES/*/datos_intermedios/
+MESES/*/datos_finales/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

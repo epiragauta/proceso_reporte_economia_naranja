@@ -6,24 +6,51 @@ Este módulo contiene todas las rutas, nombres de archivos y configuraciones
 utilizadas en el proceso de generación de reportes mensuales.
 """
 
+import os
+import sys
 from pathlib import Path
+
+
+# ============================================
+# DETECCIÓN DE ENTORNO
+# ============================================
+
+def obtener_directorio_base():
+    """
+    Obtiene el directorio base del proyecto de manera portable.
+    Funciona tanto en modo desarrollo como ejecutable compilado.
+    """
+    if getattr(sys, 'frozen', False):
+        # Ejecutable compilado con PyInstaller
+        # sys._MEIPASS es el directorio temporal donde PyInstaller descomprime
+        # sys.executable es la ruta del ejecutable
+        return Path(sys.executable).parent
+    else:
+        # Modo desarrollo (ejecutando desde fuente)
+        # Subir 2 niveles desde scripts/configuracion.py
+        return Path(__file__).resolve().parent.parent
+
 
 # ============================================
 # DIRECTORIOS BASE
 # ============================================
 
-# Directorio raíz del proyecto
-DIR_BASE = Path(__file__).resolve().parent.parent.parent
+# Directorio raíz del proyecto (auto-detectado)
+DIR_BASE = obtener_directorio_base()
 
-# Directorio del proceso
-DIR_PROCESO = DIR_BASE / "proceso_reporte_economia_naranja"
+# Directorio del proceso (donde está el ejecutable o main.py)
+DIR_PROCESO = DIR_BASE
 DIR_MESES = DIR_PROCESO / "MESES"
-# Directorios de componentes existentes
-DIR_PE04 = DIR_BASE / "PE-04"
-DIR_METAS = DIR_BASE / "metas"
-DIR_APRENDICES = DIR_BASE / "aprendices"
-DIR_REPORTE_ECONOMIA_NARANJA = DIR_BASE / "REPORTE_ECONOMIA_NARANJA"
+
+# Scripts (dentro del proyecto)
 SCRIPTS = DIR_PROCESO / "scripts"
+
+# Directorios de componentes externos (pueden no existir en ejecutable)
+# Estos se buscarán relativos al directorio del ejecutable
+DIR_PE04 = DIR_BASE.parent / "PE-04"  # Buscar un nivel arriba
+DIR_METAS = DIR_BASE.parent / "metas"
+DIR_APRENDICES = DIR_BASE.parent / "aprendices"
+DIR_REPORTE_ECONOMIA_NARANJA = DIR_BASE.parent / "REPORTE_ECONOMIA_NARANJA"
 
 # ============================================
 # MAPEO DE MESES
